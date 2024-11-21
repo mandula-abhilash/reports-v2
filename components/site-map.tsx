@@ -3,7 +3,6 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import {
   GoogleMap,
-  LoadScript,
   Marker,
   DrawingManager,
   Polygon,
@@ -17,13 +16,14 @@ import { Card } from "@/components/ui/card";
 import { MapControls } from "./site-map/map-controls";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useGoogleMaps } from "@/contexts/google-maps-context";
 
 const libraries: ("places" | "drawing")[] = ["places", "drawing"];
 
 const mapContainerStyle = {
   width: "100%",
   height: "100%",
-  borderRadius: "0.375rem",
+  borderRadius: "0.375rem", // This matches the rounded-md class
 };
 
 const defaultCenter = {
@@ -55,12 +55,12 @@ export function SiteMap({
   selectedLocation,
   polygonPath,
 }: SiteMapProps) {
+  const { isLoaded } = useGoogleMaps();
   const [map, setMap] = useState<google.maps.Map | null>(null);
   const [drawingMode, setDrawingMode] = useState<google.maps.drawing.OverlayType | null>(null);
   const [mapType, setMapType] = useState<MapTypeId>('roadmap');
   const [zoomLevel, setZoomLevel] = useState(12);
   const [isEditing, setIsEditing] = useState(false);
-  const [isScriptLoaded, setIsScriptLoaded] = useState(false);
   const osMapLayer = useRef<google.maps.ImageMapType | null>(null);
   const polygonRef = useRef<google.maps.Polygon | null>(null);
   const geocoder = useRef<google.maps.Geocoder | null>(null);
@@ -77,7 +77,7 @@ export function SiteMap({
     },
     debounce: 300,
     cache: 86400,
-    initOnMount: isScriptLoaded,
+    initOnMount: isLoaded,
   });
 
   useEffect(() => {
@@ -149,10 +149,6 @@ export function SiteMap({
     osMapLayer.current = osMapType;
   }, []);
 
-  const handleScriptLoad = useCallback(() => {
-    setIsScriptLoaded(true);
-  }, []);
-
   const handleMapTypeChange = (type: MapTypeId) => {
     setMapType(type);
     if (map) {
@@ -193,7 +189,6 @@ export function SiteMap({
       const point = path.getAt(i);
       coordinates.push({ lat: point.lat(), lng: point.lng() });
     }
-    polygon.setMap(null);
     onPolygonComplete(coordinates);
     setDrawingMode(null);
   };
@@ -223,6 +218,14 @@ export function SiteMap({
       });
     }
   }, [map, zoomLevel]);
+
+  if (!isLoaded) {
+    return (
+      <Card className="h-full rounded-md flex items-center justify-center">
+        <div className="text-muted-foreground">Loading map...</div>
+      </Card>
+    );
+  }
 
   return (
     <Card className="h-full relative rounded-md overflow-hidden">
@@ -269,75 +272,68 @@ export function SiteMap({
       </div>
 
       <div className="h-full">
-        <LoadScript
-          googleMapsApiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!}
-          libraries={libraries}
-          onLoad={handleScriptLoad}
-          loadingElement={<div className="h-full bg-muted" />}
+        <GoogleMap
+          mapContainerStyle={mapContainerStyle}
+          zoom={zoomLevel}
+          center={selectedLocation || defaultCenter}
+          onLoad={handleMapLoad}
+          options={defaultMapOptions}
         >
-          <GoogleMap
-            mapContainerStyle={mapContainerStyle}
-            zoom={zoomLevel}
-            center={selectedLocation || defaultCenter}
-            onLoad={handleMapLoad}
-            options={defaultMapOptions}
-          >
-            {selectedLocation && (
-              <Marker
-                position={selectedLocation}
-                draggable={true}
-                onDragEnd={handleMarkerDragEnd}
-              />
-            )}
+          {selectedLocation && (
+            <Marker
+              position={selectedLocation}
+              draggable={true}
+              onDragEnd={handleMarkerDragEnd}
+            />
+          )}
 
-            {polygonPath.length > 0 && (
-              <Polygon
-                onLoad={onPolygonLoad}
-                paths={polygonPath}
-                options={{
-                  fillColor: "#F09C00",
-                  fillOpacity: 0.3,
-                  strokeColor: "#F09C00",
-                  strokeWeight: 2,
-                  editable: isEditing,
-                  draggable: isEditing,
-                }}
-                onMouseUp={handlePolygonChange}
-                onDragEnd={handlePolygonChange}
-              />
-            )}
-
-            <DrawingManager
-              onPolygonComplete={handlePolygonComplete}
+          {polygonPath.length > 0 && (
+            <Polygon
+              onLoad={onPolygonLoad}
+              paths={polygonPath}
               options={{
-                drawingMode: drawingMode,
-                drawingControl: false,
-                polygonOptions: {
-                  fillColor: "#F09C00",
-                  fillOpacity: 0.3,
-                  strokeColor: "#F09C00",
-                  strokeWeight: 2,
-                  clickable: true,
-                  editable: true,
-                  zIndex: 1,
-                },
+                fillColor: "#F09C00",
+                fillOpacity: 0.3,
+                strokeColor: "#F09C00",
+                strokeWeight: 2,
+                editable: isEditing,
+                draggable: isEditing,
               }}
+              onMouseUp={handlePolygonChange}
+              onDragEnd={handlePolygonChange}
             />
+          )}
 
-            <MapControls
-              mapType={mapType}
-              zoomLevel={zoomLevel}
-              drawingMode={drawingMode}
-              hasPolygon={polygonPath.length > 0}
-              isEditing={isEditing}
-              onMapTypeChange={handleMapTypeChange}
-              onZoomChange={handleZoomChange}
-              onDrawingModeToggle={toggleDrawingMode}
-              onClearPolygon={clearPolygon}
-              onToggleEdit={toggleEdit}
-            />
-          </GoogleMap>
-        </LoadScript>
+          <DrawingManager
+            onPolygonComplete={handlePolygonComplete}
+            options={{
+              drawingMode: drawingMode,
+              drawingControl: false,
+              polygonOptions: {
+                fillColor: "#F09C00",
+                fillOpacity: 0.3,
+                strokeColor: "#F09C00",
+                strokeWeight: 2,
+                clickable: true,
+                editable: true,
+                zIndex: 1,
+              },
+            }}
+          />
+
+          <MapControls
+            mapType={mapType}
+            zoomLevel={zoomLevel}
+            drawingMode={drawingMode}
+            hasPolygon={polygonPath.length > 0}
+            isEditing={isEditing}
+            onMapTypeChange={handleMapTypeChange}
+            onZoomChange={handleZoomChange}
+            onDrawingModeToggle={toggleDrawingMode}
+            onClearPolygon={clearPolygon}
+            onToggleEdit={toggleEdit}
+          />
+        </GoogleMap>
       </div>
     </Card>
   );

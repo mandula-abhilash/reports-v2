@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { FileText, User } from "lucide-react";
+import { FileText, FileStack , User } from "lucide-react";
 import { Button } from "./ui/button";
 import Link from "next/link";
 
@@ -20,7 +20,7 @@ export function DashboardNav({ activeTab }: DashboardNavProps) {
     {
       id: "my-requests",
       label: "My Requests",
-      icon: FileText,
+      icon: FileStack,
       href: "/dashboard/requests",
     },
     {
