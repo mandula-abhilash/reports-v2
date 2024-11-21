@@ -69,7 +69,7 @@ export function SiteRequestForm() {
     }
   };
 
-  const handleLocationSelect = (location: google.maps.LatLngLiteral, address: string) => {
+  const handleLocationSelect = (location: google.maps.LatLngLiteral | null, address: string) => {
     setSelectedLocation(location);
     setSelectedAddress(address);
   };

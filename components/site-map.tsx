@@ -39,7 +39,7 @@ const defaultMapOptions = {
 };
 
 interface SiteMapProps {
-  onLocationSelect: (location: google.maps.LatLngLiteral, address: string) => void;
+  onLocationSelect: (location: google.maps.LatLngLiteral | null, address: string) => void;
   onPolygonComplete: (path: google.maps.LatLngLiteral[]) => void;
   selectedLocation: google.maps.LatLngLiteral | null;
   polygonPath: google.maps.LatLngLiteral[];
@@ -120,7 +120,7 @@ export function SiteMap({
   const handleSearchClear = () => {
     setSearchValue("", false);
     clearSuggestions();
-    onLocationSelect({ lat: 0, lng: 0 }, "");
+    onLocationSelect(null, "");
   };
 
   const handleMarkerDragEnd = (e: google.maps.MapMouseEvent) => {
@@ -243,7 +243,7 @@ export function SiteMap({
                 <li
                   key={place_id}
                   onClick={() => handleSearchSelect(description)}
-                  className="px-4 py-2 hover:bg-muted cursor-pointer"
+                  className="px-4 py-1.5 hover:bg-muted cursor-pointer text-sm"
                 >
                   {description}
                 </li>
