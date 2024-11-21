@@ -16,7 +16,8 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { MapControls } from "./site-map/map-controls";
 
-const libraries = ["places", "drawing"] as ("places" | "drawing")[];
+// Define libraries outside component to prevent unnecessary re-renders
+const libraries: ("places" | "drawing")[] = ["places", "drawing"];
 
 const mapContainerStyle = {
   width: "100%",
@@ -57,8 +58,10 @@ export function SiteMap({
   const [mapType, setMapType] = useState<MapTypeId>('roadmap');
   const [zoomLevel, setZoomLevel] = useState(12);
   const [isEditing, setIsEditing] = useState(false);
+  const [isScriptLoaded, setIsScriptLoaded] = useState(false);
   const osMapLayer = useRef<google.maps.ImageMapType | null>(null);
   const polygonRef = useRef<google.maps.Polygon | null>(null);
+  const geocoder = useRef<google.maps.Geocoder | null>(null);
 
   const {
     ready,
@@ -67,23 +70,46 @@ export function SiteMap({
     setValue: setSearchValue,
     clearSuggestions,
   } = usePlacesAutocomplete({
-    debounce: 300,
-    cache: 86400,
     requestOptions: {
       componentRestrictions: { country: 'gb' },
     },
+    debounce: 300,
+    cache: 86400,
+    initOnMount: isScriptLoaded,
   });
+
+  useEffect(() => {
+    if (window.google) {
+      geocoder.current = new google.maps.Geocoder();
+    }
+  }, []);
+
+  const updateLocationInfo = async (latLng: google.maps.LatLngLiteral) => {
+    if (geocoder.current) {
+      try {
+        const response = await geocoder.current.geocode({ location: latLng });
+        if (response.results[0]) {
+          const address = response.results[0].formatted_address;
+          setSearchValue(address, false);
+          onLocationSelect(latLng, address);
+        }
+      } catch (error) {
+        console.error("Geocoding error:", error);
+      }
+    }
+  };
 
   const handleSearchSelect = async (description: string) => {
     try {
       const results = await getGeocode({ address: description });
       const { lat, lng } = await getLatLng(results[0]);
-      onLocationSelect({ lat, lng }, description);
+      const location = { lat, lng };
+      onLocationSelect(location, description);
       setSearchValue(description, false);
       clearSuggestions();
       
       if (map) {
-        map.panTo({ lat, lng });
+        map.panTo(location);
         map.setZoom(16);
       }
     } catch (error) {
@@ -91,10 +117,22 @@ export function SiteMap({
     }
   };
 
+  const handleSearchClear = () => {
+    setSearchValue("", false);
+    clearSuggestions();
+    onLocationSelect({ lat: 0, lng: 0 }, "");
+  };
+
+  const handleMarkerDragEnd = (e: google.maps.MapMouseEvent) => {
+    if (e.latLng) {
+      const latLng = { lat: e.latLng.lat(), lng: e.latLng.lng() };
+      updateLocationInfo(latLng);
+    }
+  };
+
   const handleMapLoad = useCallback((map: google.maps.Map) => {
     setMap(map);
 
-    // Initialize OS Master Map layer
     const osMapType = new google.maps.ImageMapType({
       getTileUrl: (coord, zoom) => {
         return `https://api.os.uk/maps/raster/v1/zxy/Road_3857/${zoom}/${coord.x}/${coord.y}.png?key=${process.env.NEXT_PUBLIC_OS_MAPS_API_KEY}`;
@@ -107,6 +145,10 @@ export function SiteMap({
 
     map.mapTypes.set("OS", osMapType);
     osMapLayer.current = osMapType;
+  }, []);
+
+  const handleScriptLoad = useCallback(() => {
+    setIsScriptLoaded(true);
   }, []);
 
   const handleMapTypeChange = (type: MapTypeId) => {
@@ -149,7 +191,6 @@ export function SiteMap({
       const point = path.getAt(i);
       coordinates.push({ lat: point.lat(), lng: point.lng() });
     }
-
     polygon.setMap(null);
     onPolygonComplete(coordinates);
     setDrawingMode(null);
@@ -187,7 +228,12 @@ export function SiteMap({
         <div className="relative">
           <Input
             value={value}
-            onChange={(e) => setSearchValue(e.target.value)}
+            onChange={(e) => {
+              setSearchValue(e.target.value);
+              if (!e.target.value) {
+                handleSearchClear();
+              }
+            }}
             placeholder="Search for a location..."
             className="w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-lg border-2"
           />
@@ -211,6 +257,7 @@ export function SiteMap({
         <LoadScript
           googleMapsApiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!}
           libraries={libraries}
+          onLoad={handleScriptLoad}
           loadingElement={<div className="h-full bg-muted" />}
         >
           <GoogleMap
@@ -221,7 +268,11 @@ export function SiteMap({
             options={defaultMapOptions}
           >
             {selectedLocation && (
-              <Marker position={selectedLocation} />
+              <Marker
+                position={selectedLocation}
+                draggable={true}
+                onDragEnd={handleMarkerDragEnd}
+              />
             )}
 
             {polygonPath.length > 0 && (
