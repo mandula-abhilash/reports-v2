@@ -38,7 +38,6 @@ const pricingPlans = [
       "55 Assessment Tokens",
       "Valid for 24 months",
       "Priority Support",
-      "Bulk Report Generation",
       "Custom Branding"
     ]
   },
@@ -52,9 +51,8 @@ const pricingPlans = [
       "115 Assessment Tokens",
       "Never Expire",
       "24/7 Priority Support",
-      "Custom API Access",
-      "Dedicated Account Manager",
-      "Advanced Analytics"
+      "Custom Branding",
+      "Dedicated Account Manager"
     ]
   }
 ];

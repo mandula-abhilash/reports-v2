@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
-import { LogOut, Menu, Coins } from "lucide-react";
+import { Menu, Coins, Power } from "lucide-react";
 import LogoWhite from '@/components/logo/LogoWhite';
 import LogoBlack from '@/components/logo/LogoBlack';
 import { usePathname } from "next/navigation";
@@ -62,7 +62,7 @@ export function Header() {
                 className="rounded-full"
                 onClick={() => window.location.href = "/login"}
               >
-                <LogOut className="h-5 w-5" />
+                <Power className="h-5 w-5" />
                 <span className="sr-only">Logout</span>
               </Button>
             </>
@@ -106,7 +106,7 @@ export function Header() {
                       className="justify-start"
                       onClick={() => window.location.href = "/login"}
                     >
-                      <LogOut className="h-5 w-5 mr-2" />
+                      <Power className="h-5 w-5 mr-2" />
                       Logout
                     </Button>
                   </>

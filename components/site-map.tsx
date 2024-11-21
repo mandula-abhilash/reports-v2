@@ -15,13 +15,15 @@ import usePlacesAutocomplete, {
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { MapControls } from "./site-map/map-controls";
+import { X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
-// Define libraries outside component to prevent unnecessary re-renders
 const libraries: ("places" | "drawing")[] = ["places", "drawing"];
 
 const mapContainerStyle = {
   width: "100%",
   height: "100%",
+  borderRadius: "0.375rem",
 };
 
 const defaultCenter = {
@@ -223,20 +225,33 @@ export function SiteMap({
   }, [map, zoomLevel]);
 
   return (
-    <Card className="h-full relative">
+    <Card className="h-full relative rounded-md overflow-hidden">
       <div className="absolute top-4 left-4 right-20 z-10">
         <div className="relative">
-          <Input
-            value={value}
-            onChange={(e) => {
-              setSearchValue(e.target.value);
-              if (!e.target.value) {
-                handleSearchClear();
-              }
-            }}
-            placeholder="Search for a location..."
-            className="w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-lg border-2"
-          />
+          <div className="relative">
+            <Input
+              value={value}
+              onChange={(e) => {
+                setSearchValue(e.target.value);
+                if (!e.target.value) {
+                  handleSearchClear();
+                }
+              }}
+              placeholder="Search for a location..."
+              className="w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-lg border-2 pr-10 focus-visible:ring-0 focus-visible:ring-offset-0"
+            />
+            {value && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 hover:bg-muted"
+                onClick={handleSearchClear}
+              >
+                <X className="h-4 w-4" />
+                <span className="sr-only">Clear search</span>
+              </Button>
+            )}
+          </div>
           {status === "OK" && (
             <ul className="absolute z-20 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border rounded-md mt-1 shadow-lg max-h-60 overflow-auto">
               {data.map(({ place_id, description }) => (
