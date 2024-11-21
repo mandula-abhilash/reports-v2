@@ -45,7 +45,6 @@ export function SiteRequestForm() {
         return;
       }
 
-      // Include location and polygon data with the form submission
       const requestData = {
         ...data,
         siteLocation: selectedAddress,
@@ -53,7 +52,6 @@ export function SiteRequestForm() {
         boundary: polygonPath,
       };
 
-      // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 1000));
       
       toast({
@@ -81,10 +79,10 @@ export function SiteRequestForm() {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <div className="space-y-6">
-        <form onSubmit={handleSubmit(onSubmit)}>
-          <Card className="p-6 space-y-6">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-[calc(100vh-13rem)]">
+      <div className="flex flex-col h-full">
+        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col h-full">
+          <Card className="flex-grow p-6 space-y-6">
             <div className="space-y-2">
               <Label htmlFor="name">Full Name</Label>
               <Input
@@ -152,7 +150,7 @@ export function SiteRequestForm() {
         </form>
       </div>
 
-      <div className="h-[600px]">
+      <div className="h-full">
         <SiteMap
           onLocationSelect={handleLocationSelect}
           onPolygonComplete={handlePolygonComplete}

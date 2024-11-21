@@ -80,7 +80,7 @@ export function MapControls({
   const disabledStyle = "opacity-50 cursor-not-allowed";
 
   return (
-    <div className="absolute right-4 top-4 flex flex-col gap-2 sm:right-6">
+    <div className="absolute right-4 bottom-4 flex flex-col gap-2 sm:right-6">
       <TooltipProvider>
         {/* Layer Controls */}
         <div className="bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 rounded-lg border shadow-lg p-1 flex flex-col gap-1">

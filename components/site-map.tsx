@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { MapControls } from "./site-map/map-controls";
 
-const libraries: ("places" | "drawing")[] = ["places", "drawing"];
+const libraries = ["places", "drawing"] as ("places" | "drawing")[];
 
 const mapContainerStyle = {
   width: "100%",
@@ -69,6 +69,9 @@ export function SiteMap({
   } = usePlacesAutocomplete({
     debounce: 300,
     cache: 86400,
+    requestOptions: {
+      componentRestrictions: { country: 'gb' },
+    },
   });
 
   const handleSearchSelect = async (description: string) => {
@@ -94,7 +97,7 @@ export function SiteMap({
     // Initialize OS Master Map layer
     const osMapType = new google.maps.ImageMapType({
       getTileUrl: (coord, zoom) => {
-        return `https://api.os.uk/maps/raster/v1/zxy/Layer/${zoom}/${coord.x}/${coord.y}.png?key=${process.env.NEXT_PUBLIC_OS_MAPS_API_KEY}`;
+        return `https://api.os.uk/maps/raster/v1/zxy/Road_3857/${zoom}/${coord.x}/${coord.y}.png?key=${process.env.NEXT_PUBLIC_OS_MAPS_API_KEY}`;
       },
       tileSize: new google.maps.Size(256, 256),
       maxZoom: 18,
@@ -147,9 +150,7 @@ export function SiteMap({
       coordinates.push({ lat: point.lat(), lng: point.lng() });
     }
 
-    // Remove the drawn polygon as we'll render our own
     polygon.setMap(null);
-    
     onPolygonComplete(coordinates);
     setDrawingMode(null);
   };
@@ -182,17 +183,16 @@ export function SiteMap({
 
   return (
     <Card className="h-full relative">
-      <div className="absolute top-4 left-4 right-16 z-10">
+      <div className="absolute top-4 left-4 right-20 z-10">
         <div className="relative">
           <Input
             value={value}
             onChange={(e) => setSearchValue(e.target.value)}
-            disabled={!ready}
             placeholder="Search for a location..."
-            className="w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-lg"
+            className="w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-lg border-2"
           />
           {status === "OK" && (
-            <ul className="absolute z-10 w-full bg-background border rounded-md mt-1 shadow-lg max-h-60 overflow-auto">
+            <ul className="absolute z-20 w-full bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border rounded-md mt-1 shadow-lg max-h-60 overflow-auto">
               {data.map(({ place_id, description }) => (
                 <li
                   key={place_id}
@@ -211,6 +211,7 @@ export function SiteMap({
         <LoadScript
           googleMapsApiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY!}
           libraries={libraries}
+          loadingElement={<div className="h-full bg-muted" />}
         >
           <GoogleMap
             mapContainerStyle={mapContainerStyle}
